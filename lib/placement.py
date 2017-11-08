@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import token
+import kstoken
 
 import requests
 import json
@@ -11,14 +11,14 @@ import sys
 
 resource = sys.argv[1] if len(sys.argv) > 1 else "resource_classes"
 
-HOST = "10.0.0.29"
+HOST = "127.0.0.1"
 HOSTURL = "http://%s" % HOST
 BASEURL = "http://%s/placement/" % HOST
 VER = 'OpenStack-API-Version:"placement 1.2"'
 
 HEADERS = {"Content-Type": "application/json",
            "OpenStack-API-Version": "placement latest",
-           "X-Auth-Token": token.token}
+           "X-Auth-Token": kstoken.token}
 resources = ["resource_providers", "resource_classes", "inventories"]
 
 def ramdom_shuffle(l):

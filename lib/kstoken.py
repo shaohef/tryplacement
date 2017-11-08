@@ -46,7 +46,7 @@ url = OS_AUTH_URL if OS_AUTH_URL else "http://%s/identity/v3/auth/tokens" % HOST
 headers = {"Content-Type": "application/json"}
 r = requests.post(url, data=json.dumps(auth), headers=headers)
 data = r.json()
-# print json.dumps(data, sort_keys=True, indent=4, separators=(',', ': '))
+print json.dumps(data, sort_keys=True, indent=4, separators=(',', ': '))
 project_id = data["token"]["project"]["id"] 
 print project_id
 token = r.headers['X-Subject-Token']
