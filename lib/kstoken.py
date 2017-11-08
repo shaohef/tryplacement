@@ -5,7 +5,7 @@ import os
 
 OS_USERNAME = os.environ.get("OS_USERNAME") if os.environ.get("OS_USERNAME") else "admin"
 OS_PASSWORD = os.environ.get("OS_PASSWORD") if os.environ.get("OS_PASSWORD") else "123"
-OS_PROJECT_NAME = os.getenv("OS_PROJECT_NAME") if os.getenv("OS_PROJECT_NAME") else "admin" 
+OS_PROJECT_NAME = os.getenv("OS_PROJECT_NAME") if os.getenv("OS_PROJECT_NAME") else "admin"
 OS_AUTH_URL = os.getenv("OS_AUTH_URL")
 
 OS_PROJECT_DOMAIN_ID = os.getenv("OS_PROJECT_DOMAIN_ID") if os.getenv("OS_PROJECT_DOMAIN_ID") else "Default"
@@ -26,7 +26,7 @@ auth = {
                     "domain": {
                         "name": OS_USER_DOMAIN_ID
                     },
-                    "password": OS_PASSWORD 
+                    "password": OS_PASSWORD
                 }
             }
         },
@@ -34,7 +34,7 @@ auth = {
             "project": {
                 "name": OS_PROJECT_NAME,
                "domain": {
-                   "name": OS_PROJECT_DOMAIN_ID 
+                   "name": OS_PROJECT_DOMAIN_ID
                }
             }
         }
@@ -46,8 +46,10 @@ url = OS_AUTH_URL if OS_AUTH_URL else "http://%s/identity/v3/auth/tokens" % HOST
 headers = {"Content-Type": "application/json"}
 r = requests.post(url, data=json.dumps(auth), headers=headers)
 data = r.json()
-print json.dumps(data, sort_keys=True, indent=4, separators=(',', ': '))
-project_id = data["token"]["project"]["id"] 
+# print json.dumps(data, sort_keys=True, indent=4, separators=(',', ': '))
+project_id = data["token"]["project"]["id"]
+user_id = data["token"]["user"]["id"]
 print project_id
+print user_id
 token = r.headers['X-Subject-Token']
 print token

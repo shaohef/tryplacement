@@ -11,6 +11,70 @@ import sys
 
 resource = sys.argv[1] if len(sys.argv) > 1 else "resource_classes"
 
+INVENTORIES_DATA = {
+    "inventories": {
+        "DISK_GB": {
+            "allocation_ratio": 1.0,
+            "max_unit": 38,
+            "min_unit": 1,
+            "reserved": 0,
+            "step_size": 1,
+            "total": 38
+        },
+        "MEMORY_MB": {
+            "allocation_ratio": 1.5,
+            "max_unit": 16046,
+            "min_unit": 1,
+            "reserved": 512,
+            "step_size": 1,
+            "total": 16046
+        },
+        "VCPU": {
+            "allocation_ratio": 16.0,
+            "max_unit": 8,
+            "min_unit": 1,
+            "reserved": 0,
+            "step_size": 1,
+            "total": 8
+        }
+    }
+}
+
+INVENTORIES_RESOURCE = {
+    "allocation_ratio": 1,
+    "max_unit": 32,
+    "min_unit": 1,
+    "reserved": 0,
+    "step_size": 1,
+    "total": 20000
+}
+
+AGGREGATES_SET = ["42896e0d-205d-4fe3-bd1e-100924931787"]
+
+TRAITS_DATA = {
+    "traits": [
+        "CUSTOM_TEST"
+    ]
+}
+
+ALLOCATIONS_DATA = {
+    "allocations": [
+        {
+            "resource_provider": {
+                "uuid": "6e3b2ce9-9175-4830-a862-b9de690bdceb"
+            },
+            "resources": {
+                "CUSTOM_FPGA": 2,
+            }
+        },
+    ],
+    # "project_id": "07e4536ce6234eaa9f6ae23698ddb941",
+    # "user_id": "81c516e3-5e0e-4dcb-9a38-4473d229a950"
+}
+
+USAGES_DATA = {"project_id", kstoken.project_id, "user_id", kstoken.user_id}
+
+
 HOST = "127.0.0.1"
 HOSTURL = "http://%s" % HOST
 BASEURL = "http://%s/placement/" % HOST
@@ -31,7 +95,7 @@ def check_error(r):
     if not r.ok:
         print r.content
         print "Error, exit"
-        sys.exit(1) 
+        sys.exit(1)
 
 def pretty_print(r):
     if not r.ok:
@@ -44,24 +108,25 @@ def sanity_pretty(rp):
     if rp.get("generation"):
         print "Generation: " + str(rp["generation"])
     name = ""
-    if rp.get("name"): 
+    if rp.get("name"):
         name = "Name: " + rp["name"]
     if rp.get("uuid"):
         uuid = "UUID: " + rp["uuid"]
-        name = name + "\t" + uuid if name else uuid 
+        name = name + "\t" + uuid if name else uuid
     if name:
-        print name 
+        print name
 
 def get_sub_resources(res_type):
+    """res_type can be resource_providers or resource_classes"""
     print "*" * 10 + res_type.capitalize()  + "*" * 10
-    url = BASEURL +  res_type 
+    url = BASEURL +  res_type
     r = requests.get(url, headers=HEADERS)
     check_error(r)
     pretty_print(r)
-    
+
     for rp in r.json()[res_type]:
         sanity_pretty(rp)
-        for sub in rp["links"]: 
+        for sub in rp["links"]:
             if sub["rel"] == "self":
                continue
             print "*" * 10 + " Get Resource: " + sub["rel"] + "*" * 10
@@ -82,7 +147,7 @@ def _update_resource(url, data):
     if not r.ok:
         print r.content
 
-# OP for version 
+# OP for version
 def get_versions():
     url = BASEURL
     r = requests.get(url, headers=HEADERS)
@@ -91,7 +156,7 @@ def get_versions():
 # OP for resources providers
 def _print_sub_resources_of_providers(rp):
         sanity_pretty(rp)
-        for sub in rp["links"]: 
+        for sub in rp["links"]:
             if sub["rel"] == "self":
                continue
             print "*" * 10 + " Get Resource: " + sub["rel"] + "*" * 10
@@ -102,10 +167,10 @@ def _print_sub_resources_of_providers(rp):
 
 def create_resource_providers(name):
     _create_resource("resource_providers", name)
-    
+
 def get_resource_provider_uuid(name):
-    res_type = "resource_providers" 
-    url = BASEURL +  res_type 
+    res_type = "resource_providers"
+    url = BASEURL +  res_type
     r = requests.get(url, headers=HEADERS)
     check_error(r)
     for rp in r.json()[res_type]:
@@ -113,24 +178,24 @@ def get_resource_provider_uuid(name):
             return rp.get("uuid")
 
 def get_resource_provider_uuids():
-    res_type = "resource_providers" 
-    url = BASEURL +  res_type 
+    res_type = "resource_providers"
+    url = BASEURL +  res_type
     r = requests.get(url, headers=HEADERS)
     check_error(r)
-    l = [] 
+    l = []
     for rp in r.json()[res_type]:
-        d = {} 
+        d = {}
         d[rp["name"]] = rp["uuid"]
         l.append(d)
-    return l 
+    return l
 
 def get_resource_provider(uuid):
-    url = BASEURL + "resource_providers/" + uuid 
+    url = BASEURL + "resource_providers/" + uuid
     r = requests.get(url, headers=HEADERS)
     _print_sub_resources_of_providers(r.json())
 
 def delete_resource_provider(uuid):
-    url = BASEURL + "resource_providers/" + uuid 
+    url = BASEURL + "resource_providers/" + uuid
     r = requests.delete(url, headers=HEADERS)
 
 # OP for resource_providers inventories
@@ -144,48 +209,22 @@ def delete_resource_provider_inventories(uuid):
     r = requests.delete(url, headers=HEADERS)
     print "Delete all inventorie resource classes, and return: " + str(r.status_code)
 
-def update_resource_provider_inventories(uuid):
+def update_resource_provider_inventories(uuid, payload=None):
     url = BASEURL + "resource_providers/" + uuid +"/inventories"
     r = requests.get(url, headers=HEADERS)
     generation = r.json()["resource_provider_generation"]
-    data = {
-        "inventories": {
-            "DISK_GB": {
-                "allocation_ratio": 1.0,
-                "max_unit": 38,
-                "min_unit": 1,
-                "reserved": 0,
-                "step_size": 1,
-                "total": 38
-            },
-            "MEMORY_MB": {
-                "allocation_ratio": 1.5,
-                "max_unit": 16046,
-                "min_unit": 1,
-                "reserved": 512,
-                "step_size": 1,
-                "total": 16046
-            },
-            "VCPU": {
-                "allocation_ratio": 16.0,
-                "max_unit": 8,
-                "min_unit": 1,
-                "reserved": 0,
-                "step_size": 1,
-                "total": 8
-            }
-        }
-    }
-    data = {
+    data = payload if payload is not None else {
         "inventories": {
             "CUSTOM_FPGA": {
                 "max_unit": 16,
                 "step_size": 1,
-                "total": 6 
+                "total": 6
             },
         },
         "resource_provider_generation": generation
     }
+    if "resource_provider_generation" not in data:
+        data["resource_provider_generation"] = generation
     _update_resource(url, data)
 
 # OP for resource_providers inventories resource_classes
@@ -195,22 +234,24 @@ def get_resource_provider_inventories_resource_class(uuid, name):
     pretty_print(r)
 
 def delete_resource_provider_inventories_resource_class(uuid, name):
-    url = BASEURL + "resource_providers/" + uuid +"/inventories/" + name 
+    url = BASEURL + "resource_providers/" + uuid +"/inventories/" + name
     r = requests.delete(url, headers=HEADERS)
     print "Delete a inventorie resource class: " + name + ", and return: " + str(r.status_code)
 
-def update_resource_provider_inventories_resource_class(uuid, name):
+def update_resource_provider_inventories_resource_class(uuid, name, payload=None):
     url = BASEURL + "resource_providers/" + uuid + "/inventories/" + name
     r = requests.get(url, headers=HEADERS)
-    
+
     generation = r.json()["resource_provider_generation"] if r.ok else 0
-    data = {
+    data = payload if payload is not None else {
         "max_unit": 32,
         "step_size": 1,
-        "total": 20000 
+        "total": 20000
     }
     # NOTE generation must can not less or bigger than the current value.
-    if generation:
+    if "resource_provider_generation" not in data:
+        data["resource_provider_generation"] = generation
+    elif generation:
         data["resource_provider_generation"] =  generation
     _update_resource(url, data)
 
@@ -224,16 +265,16 @@ def get_resource_provider_aggregates(uuid):
 def delete_resource_provider_aggregates(uuid):
     url = BASEURL + "resource_providers/" + uuid +"/aggregates"
     r = requests.delete(url, headers=HEADERS)
-    print "Delete a aggregate resource class: " + name + ", and return: " + str(r.status_code)
+    print "Delete a aggregate, and return: " + str(r.status_code)
 
-def update_resource_provider_aggregates(uuid):
+def update_resource_provider_aggregates(uuid, payload=None):
     url = BASEURL + "resource_providers/" + uuid + "/aggregates"
     r = requests.get(url, headers=HEADERS)
     # NOTE aggregates can be everything, even not exist.
-    data = [
+    data = payload if payload is not None else [
         "42896e0d-205d-4fe3-bd1e-100924931787",
         "5e08ea53-c4c6-448e-9334-ac4953de3cfa"
-    ] 
+    ]
     _update_resource(url, data)
 
 # OP for resource_classes
@@ -241,18 +282,18 @@ def create_resource_classe(name):
     _create_resource("resource_classes", name)
 
 def delete_resource_classe(name):
-    url = BASEURL + "resource_classes/" + name 
+    url = BASEURL + "resource_classes/" + name
     r = requests.delete(url, headers=HEADERS)
     print "Delete a resource_classes, and return: " + str(r.status_code)
 
 def get_resource_classe(name):
-    url = BASEURL + "resource_classes/" + name 
+    url = BASEURL + "resource_classes/" + name
     r = requests.get(url, headers=HEADERS)
     pretty_print(r)
 
 # OP for traits
 def create_trait(name):
-    url = BASEURL + "traits/" + name 
+    url = BASEURL + "traits/" + name
     r = requests.put(url, headers=HEADERS)
     if r.ok:
         print "Create trait with name: " + name + ", and return: " + str(r.status_code)
@@ -261,7 +302,7 @@ def create_trait(name):
 
 
 def delete_trait(name):
-    url = BASEURL + "traits/" + name 
+    url = BASEURL + "traits/" + name
     r = requests.delete(url, headers=HEADERS)
     if r.ok:
         print "Delete trait with name: " + name + ", and return: " + str(r.status_code)
@@ -274,7 +315,7 @@ def get_traits():
     pretty_print(r)
 
 def show_trait(name):
-    url = BASEURL + "traits/" + name 
+    url = BASEURL + "traits/" + name
     r = requests.get(url, headers=HEADERS)
     if r.ok:
         print "Get trait with name: " + name + ", and return: " + str(r.status_code)
@@ -292,30 +333,31 @@ def delete_resource_provider_traits(uuid):
     r = requests.delete(url, headers=HEADERS)
     print "Delete all traits, and return: " + str(r.status_code)
 
-def update_resource_provider_traits(uuid):
+def update_resource_provider_traits(uuid, payload=None):
     url = BASEURL + "resource_providers/" + uuid +"/traits"
     r = requests.get(url, headers=HEADERS)
     generation = r.json()["resource_provider_generation"]
-    data = {
-        "resource_provider_generation": generation,
+    data = payload if payload is not None else {
         "traits": [
             "CUSTOM_TEST"
         ]
     }
+    if "resource_provider_generation" not in data:
+        data["resource_provider_generation"] = generation
     _update_resource(url, data)
 
 # OP for allocations
-def update_allocations(uuid, res_uuid, res_name):
-    url = BASEURL + "allocations/" + uuid 
+def update_allocations(uuid, res_uuid, res_name, payload=None):
+    url = BASEURL + "allocations/" + uuid
     # NOTE allocations do not need generation
     # NOTE project_id and user_id can be arbitrary
-    # NOTE resource number must be less than the amount 
+    # NOTE resource number must be less than the amount
     # NOTE consumer_uuid can be arbitrary
-    data = {
+    data = payload if payload is not None else {
         "allocations": [
             {
                 "resource_provider": {
-                    "uuid": res_uuid 
+                    "uuid": res_uuid
                 },
                 "resources": {
                     res_name: 2,
@@ -328,12 +370,12 @@ def update_allocations(uuid, res_uuid, res_name):
     _update_resource(url, data)
 
 def delete_allocations(uuid):
-    url = BASEURL + "allocations/" + uuid 
+    url = BASEURL + "allocations/" + uuid
     r = requests.delete(url, headers=HEADERS)
     print "Delete a allocations, and return: " + str(r.status_code)
 
 def get_allocations(uuid):
-    url = BASEURL + "allocations/" + uuid 
+    url = BASEURL + "allocations/" + uuid
     r = requests.get(url, headers=HEADERS)
     pretty_print(r)
 
@@ -345,13 +387,19 @@ def get_resource_provider_allocations(uuid):
 
 
 # OP for usages
-def get_usages(project_id=None, user_id=None):
+def get_usages(**payload):
+    """ payload params:
+       project_id:
+       user_id:
+       payload = {"project_id", project_id}
+    """
     # NOTE project_id and user_id can be in query.
     url = BASEURL + "usages"
-    url = url + "?project_id="+project_id
-    # payload = {"project_id", project_id}
-    # r = requests.get(url, headers=HEADERS, params=payload)
-    r = requests.get(url, headers=HEADERS)
+    # url = url + "?project_id="+project_id
+    # r = requests.get(url, headers=HEADERS)
+    if "project_id" not in payload:
+        payload["project_id"] = kstoken.project_id
+    r = requests.get(url, headers=HEADERS, params=payload)
     if not r.ok:
         print r.content
     pretty_print(r)
@@ -363,9 +411,10 @@ def get_resource_provider_usages(uuid):
     pretty_print(r)
 
 # OP for allocation_candidates
-def get_allocation_candidates(parms={}):
-    url = BASEURL + "allocation_candidates/" 
-    r = requests.get(url, headers=HEADERS)
+def get_allocation_candidates(**payload):
+    """payload = {'resources': 'VCPU:4,DISK_GB:64,MEMORY_MB:2048'}"""
+    url = BASEURL + "allocation_candidates"
+    r = requests.get(url, headers=HEADERS, params=payload)
     pretty_print(r)
 
 # ********************************************************
