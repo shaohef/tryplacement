@@ -85,6 +85,9 @@ HEADERS = {"Content-Type": "application/json",
            "X-Auth-Token": kstoken.token}
 resources = ["resource_providers", "resource_classes", "inventories"]
 
+def get_uuid():
+    return str(uuidlib.uuid4())
+
 def ramdom_shuffle(l):
     i = random.randint(1, len(l)-1)
     return l[i].values()[0]

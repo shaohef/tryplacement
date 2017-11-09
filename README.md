@@ -18,3 +18,6 @@ Just run:
 $ ./cmd.py
 
 You can edit any of the flow in the ./cmd.py as you want.
+
+or your run the command to test Placement interactive:
+$ ipython -i bootstrap.py
