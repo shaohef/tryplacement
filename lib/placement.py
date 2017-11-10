@@ -213,6 +213,11 @@ def delete_resource_provider_inventories(uuid):
     print "Delete all inventorie resource classes, and return: " + str(r.status_code)
 
 def update_resource_provider_inventories(uuid, payload=None):
+    """uuid: provider uuid
+           get_resource_provider_uuids()
+       payload: please ref INVENTORIES_DATA
+           data = INVENTORIES_DATA
+           update_resource_provider_inventories(uuid, data)"""
     url = BASEURL + "resource_providers/" + uuid +"/inventories"
     r = requests.get(url, headers=HEADERS)
     generation = r.json()["resource_provider_generation"]
@@ -237,11 +242,22 @@ def get_resource_provider_inventories_resource_class(uuid, name):
     pretty_print(r)
 
 def delete_resource_provider_inventories_resource_class(uuid, name):
+    """uuid: provider uuid
+           get_resource_provider_uuids()
+       name: resource_class name
+           get_sub_resources("resource_classes")"""
     url = BASEURL + "resource_providers/" + uuid +"/inventories/" + name
     r = requests.delete(url, headers=HEADERS)
     print "Delete a inventorie resource class: " + name + ", and return: " + str(r.status_code)
 
 def update_resource_provider_inventories_resource_class(uuid, name, payload=None):
+    """uuid: provider uuid
+           get_resource_provider_uuids()
+       name: resource_class name
+           get_sub_resources("resource_classes")
+       payload: please ref INVENTORIES_RESOURCE
+           data = INVENTORIES_RESOURCE
+           update_resource_provider_inventories(uuid, data)"""
     url = BASEURL + "resource_providers/" + uuid + "/inventories/" + name
     r = requests.get(url, headers=HEADERS)
 
@@ -337,6 +353,11 @@ def delete_resource_provider_traits(uuid):
     print "Delete all traits, and return: " + str(r.status_code)
 
 def update_resource_provider_traits(uuid, payload=None):
+    """uuid: provider uuid
+           get_resource_provider_uuids()
+       payload: please ref TRAITS_DATA
+           data = TRAITS_DATA
+           update_resource_provider_traits(uuid, data)"""
     url = BASEURL + "resource_providers/" + uuid +"/traits"
     r = requests.get(url, headers=HEADERS)
     generation = r.json()["resource_provider_generation"]
@@ -351,6 +372,14 @@ def update_resource_provider_traits(uuid, payload=None):
 
 # OP for allocations
 def update_allocations(uuid, res_uuid, res_name, payload=None):
+    """uuid: customer_uuid
+           uuid = get_uuid()
+       res_uuid: provider uuid
+           get_resource_provider_uuids()
+       res_name: resource_class name
+           get_sub_resources("resource_classes")
+       payload: ref ALLOCATIONS_DATA
+           payload = ALLOCATIONS_DATA"""
     url = BASEURL + "allocations/" + uuid
     # NOTE allocations do not need generation
     # NOTE project_id and user_id can be arbitrary
