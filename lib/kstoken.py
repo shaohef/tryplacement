@@ -49,7 +49,7 @@ data = r.json()
 # print json.dumps(data, sort_keys=True, indent=4, separators=(',', ': '))
 project_id = data["token"]["project"]["id"]
 user_id = data["token"]["user"]["id"]
-print project_id
-print user_id
+print "project_id = " + project_id
+print "user_id = " + user_id
 token = r.headers['X-Subject-Token']
-print token
+print "token = " + token
