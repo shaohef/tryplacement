@@ -68,6 +68,8 @@ ALLOCATIONS_DATA = {
             }
         },
     ],
+    "project_id": kstoken.project_id, # del data["project_id"]
+    "user_id": kstoken.user_id        # del data["user_id"]
     # "project_id": "07e4536ce6234eaa9f6ae23698ddb941",
     # "user_id": "81c516e3-5e0e-4dcb-9a38-4473d229a950"
 }
@@ -155,6 +157,7 @@ def get_versions():
     url = BASEURL
     r = requests.get(url, headers=HEADERS)
     pretty_print(r)
+    return r
 
 # OP for resources providers
 def _print_sub_resources_of_providers(rp):
@@ -396,8 +399,11 @@ def update_allocations(uuid, res_uuid, res_name, payload=None):
                 }
             },
         ],
+        "project_id": kstoken.project_id, # del data["project_id"]
+        "user_id": kstoken.user_id        # del data["user_id"]
         # "project_id": "6e3b2ce9-9175-4830-a862-b9de690bdceb",
         # "user_id": "81c516e3-5e0e-4dcb-9a38-4473d229a950"
+        # r = get_versions()
     }
     _update_resource(url, data)
 
