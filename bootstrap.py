@@ -1,6 +1,7 @@
 # -*- encoding: utf-8 -*-
 
 from lib.placement import *
+from lib.kstoken import reload_token
 import lib.placement
 import imp
 

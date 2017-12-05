@@ -53,3 +53,12 @@ print "project_id = " + project_id
 print "user_id = " + user_id
 token = r.headers['X-Subject-Token']
 print "token = " + token
+
+
+def reload_token():
+    global url
+    global headers
+    global auth
+    global token
+    r = requests.post(url, data=json.dumps(auth), headers=headers)
+    token = r.headers['X-Subject-Token']
