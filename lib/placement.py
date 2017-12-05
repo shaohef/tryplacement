@@ -209,18 +209,23 @@ def get_resource_provider_inventories(uuid):
     url = BASEURL + "resource_providers/" + uuid + "/inventories"
     r = requests.get(url, headers=HEADERS)
     pretty_print(r)
+    return r.json()
 
 def delete_resource_provider_inventories(uuid):
     url = BASEURL + "resource_providers/" + uuid +"/inventories"
     r = requests.delete(url, headers=HEADERS)
     print "Delete all inventorie resource classes, and return: " + str(r.status_code)
 
-def update_resource_provider_inventories(uuid, payload=None):
+def update_resource_provider_inventories(uuid, payload=None, replaced=False):
     """uuid: provider uuid
            get_resource_provider_uuids()
        payload: please ref INVENTORIES_DATA
            data = INVENTORIES_DATA
-           update_resource_provider_inventories(uuid, data)"""
+           update_resource_provider_inventories(uuid, data)
+       replaced: False, the original inventories will be partial updated
+           with payload. True, inventories will completely be replaced
+           by payload.
+    """
     url = BASEURL + "resource_providers/" + uuid +"/inventories"
     r = requests.get(url, headers=HEADERS)
     generation = r.json()["resource_provider_generation"]
@@ -234,6 +239,10 @@ def update_resource_provider_inventories(uuid, payload=None):
         },
         "resource_provider_generation": generation
     }
+    if not replaced:
+        org_data = r.json()
+        org_data["inventories"].update(data["inventories"])
+        data = org_data
     if "resource_provider_generation" not in data:
         data["resource_provider_generation"] = generation
     _update_resource(url, data)
