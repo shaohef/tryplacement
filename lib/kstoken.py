@@ -42,7 +42,7 @@ auth = {
 }
 
 # NOTE hardcode.
-url = OS_AUTH_URL if OS_AUTH_URL else "http://%s/identity/v3/auth/tokens" % HOST
+url = OS_AUTH_URL+"/v3/auth/tokens" if OS_AUTH_URL else "http://%s/identity/v3/auth/tokens" % HOST
 headers = {"Content-Type": "application/json"}
 r = requests.post(url, data=json.dumps(auth), headers=headers)
 data = r.json()

@@ -261,8 +261,9 @@ def update_resource_provider_inventories_resource_class(uuid, name, payload=None
        payload: please ref INVENTORIES_RESOURCE
            data = INVENTORIES_RESOURCE
            update_resource_provider_inventories(uuid, data)"""
+    inv_url = BASEURL + "resource_providers/" + uuid + "/inventories"
     url = BASEURL + "resource_providers/" + uuid + "/inventories/" + name
-    r = requests.get(url, headers=HEADERS)
+    r = requests.get(inv_url, headers=HEADERS)
 
     generation = r.json()["resource_provider_generation"] if r.ok else 0
     data = payload if payload is not None else {
