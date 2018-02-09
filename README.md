@@ -21,3 +21,10 @@ You can edit any of the flow in the ./cmd.py as you want.
 
 or your run the command to test Placement interactive:
 $ ipython -i bootstrap.py
+
+
+upload an image, use the follow commad. Then it can generate a placement.
+$ openstack image create --file token.json  test.token
+$ openstack image list
+$ openstack image show 58b813db-1fb7-43ec-b85c-3b771c685d22
+$ openstack image set --tag INTEL --tag FPGA --property vendor=intel type=crypto  58b813db-1fb7-43ec-b85c-3b771c685d22
