@@ -1,9 +1,11 @@
 #!/usr/bin/python
 
 import datetime
+import hashlib
 import os
 
 from oslo_utils import timeutils
+from oslo_utils import units
 
 from lib.placement import *
 from lib.glance import *
@@ -14,6 +16,7 @@ from lib.glance import *
 VENDOR_NAME_ID_MAPS = {"intel": "0x8086"}
 VENDOR_ID_NAME_MAPS = dict(map(reversed, VENDOR_NAME_ID_MAPS.items()))
 FGPA_IMGAGE_PATH = "./fpgas"
+TEST_FILE = "/home/ubuntu/api_tests/token.json"
 
 # local cache
 ALL_IMAGES = {
@@ -81,13 +84,19 @@ def gen_traits_and_resource_class(images):
     return traits, resource_classes
 
 
-def download_image(uuid):
+def download_image(uuid, md5):
     if not os.path.lexists(FGPA_IMGAGE_PATH):
         os.makedirs(FGPA_IMGAGE_PATH)
     image = os.path.join(FGPA_IMGAGE_PATH, uuid)
     if not os.path.lexists(image):
         # HTTP Download
         os.mknod(image)
+        image_md5 = hash_for_file(TEST_FILE)
+        if md5 != image_md5:
+            raise Exception("Download an incomplete image.")
+        md5_file = image + "_md5"
+        with open(md5_file, 'w') as f:
+            f.write(image_md5)
 
 
 def get_vendor_from_resource_name(name):
@@ -116,11 +125,54 @@ def from_resource_name_uuid(name):
                 return k
 
 
+def hash_for_file(path, algorithm=hashlib.algorithms[0],
+                  block_size= 64 * units.Mi, human_readable=True):
+    """
+    Block size directly depends on the block size of your filesystem
+    to avoid performances issues
+    NTFS has blocks of 4096 octets by default.
+
+    Linux Ext4 block size
+    sudo tune2fs -l /dev/sda5 | grep -i 'block size'
+    > Block size:               4096
+
+    Input:
+        path: a path
+        algorithm: an algorithm in hashlib.algorithms
+                   ATM: ('md5', 'sha1', 'sha224', 'sha256', 'sha384', 'sha512')
+        block_size: a multiple of 128 corresponding to the block size of your
+                    filesystem. Here keep the same value of glance by default.
+        human_readable: switch between digest() or hexdigest() output,
+                        default hexdigest()
+    Output:
+        hash
+    """
+    if algorithm not in hashlib.algorithms:
+        raise NameError('The algorithm "{algorithm}" you specified is '
+                        'not a member of "hashlib.algorithms"'
+                        ''.format(algorithm=algorithm))
+
+    # According to hashlib documentation using new()
+    # will be slower then calling using named
+    # constructors, ex.: hashlib.md5()
+    hash_algo = hashlib.new(algorithm)
+
+    with open(path, 'rb') as f:
+        for chunk in iter(lambda: f.read(block_size), b''):
+             hash_algo.update(chunk)
+    if human_readable:
+        file_hash = hash_algo.hexdigest()
+    else:
+        file_hash = hash_algo.digest()
+    return file_hash
+
+
 if update_images():
     t, r = gen_traits_and_resource_class(ALL_IMAGES)
     print t, "_".join(r)
 
-download_image("123456")
+md5 = hash_for_file(TEST_FILE)
+download_image("123456", md5)
 # if NONE, update images.
 vendor = get_vendor_from_resource_name("CUSTOM_FPGA_INTEL_CRYPTO")
 vendors = get_vendors()
