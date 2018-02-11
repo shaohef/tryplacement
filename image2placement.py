@@ -18,8 +18,13 @@ VENDOR_ID_NAME_MAPS = dict(map(reversed, VENDOR_NAME_ID_MAPS.items()))
 FGPA_IMGAGE_PATH = "./fpgas"
 TEST_FILE = "/home/ubuntu/api_tests/token.json"
 
+# glance image: ref nova/virt/libvirt/utils.py
+# from nova.virt import images
+# nova/virt/images.py
+# IMAGE_API = image.API()
 # local cache
 ALL_IMAGES = {
+    # should it be image object list? ref: nova/objects/image_meta.py
     "images": {},
     "updated_at": "2000-01-01T00:00:00Z"}
 
