@@ -6,6 +6,8 @@ import os
 
 from oslo_utils import timeutils
 from oslo_utils import units
+from nova.virt import virtapi
+from nova.virt import driver
 
 from lib.placement import *
 from lib.glance import *
@@ -173,8 +175,34 @@ def hash_for_file(path, algorithm=hashlib.algorithms[0],
     return file_hash
 
 
+def update_placement_traits(provider_uuid):
+    traits_data = {
+        "traits": []
+    }
+    trs = get_traits()
+    p_trs = get_resource_provider_traits(provider_uuid)
+    for t in traits:
+        ct = "_".join(["CUSTOM", "CYBORG", t])
+        if ct not in trs:
+            create_trait(ct)
+        # just add update
+        if ct not in p_trs["traits"]:
+            traits_data["traits"].append(ct)
+
+    if traits_data["traits"]:
+        traits_data["traits"].extend(p_trs["traits"])
+        update_resource_provider_traits(provider_uuid, traits_data)
+
+    p_trs = get_resource_provider_traits(provider_uuid)
+    print p_trs["traits"]
+
+
+traits = []
+resource_classes = ''
 if update_images():
     t, r = gen_traits_and_resource_class(ALL_IMAGES)
+    traits = t
+    resource_classes = "_".join(r)
     print t, "_".join(r)
 
 md5 = hash_for_file(TEST_FILE)
@@ -184,3 +212,60 @@ vendor = get_vendor_from_resource_name("CUSTOM_FPGA_INTEL_CRYPTO")
 vendors = get_vendors()
 print vendor, vendors, vendor in vendors
 print from_resource_name_uuid("CUSTOM_FPGA_INTEL_CRYPTO")
+
+# we need to load virt driver to get hostname.
+# ref: "compute/manager.py". Nova use ComputeVirtAPI.
+# Here we will use virtapi.VirtAPI directly.
+virtapi = virtapi.VirtAPI()
+# more driver support see: conf/compute.py, compute_driver option.
+compute_driver = "libvirt.LibvirtDriver"
+driver = driver.load_compute_driver(virtapi, compute_driver)
+# it will report:
+# No handlers could be found for logger "os_brick.initiator.connectors.remotefs"
+# libvirt:  error : internal error: could not initialize domain event timer
+# but no harmful for get_hostname()
+placement_name = driver._host.get_hostname()
+
+provider_uuid = get_resource_provider_uuid(placement_name)
+print provider_uuid
+update_placement_traits(provider_uuid)
+
+# add provider code.
+# ref nova: nova/compute/resource_tracker.py
+#     _update call scheduler_client.set_inventory_for_provider
+
+# provider name ref: get_available_resource
+#    update_available_resource -> _update_available_resource ->
+#    _init_compute_node -> objects.ComputeNode
+# privider inventory ref: get_inventory
+def update_placement_resource_class(provider_uuid, resource_classes):
+    inventory_data = {
+        "allocation_ratio": 1.0,
+        "max_unit": 4,
+        "min_unit": 1,
+        "reserved": 0,
+        "step_size": 1,
+        "total": 4
+    }
+    inventories_data = {"inventories": {}}
+
+    if resource_classes:
+        exist = get_resource_classe(resource_classes)
+        print exist
+        if not exist:
+            create_resource_classe(resource_classes)
+        get_resource_classe(resource_classes)
+
+        exist = get_resource_provider_inventories_resource_class(
+            provider_uuid, resource_classes)
+        if not exist:
+            inventories_data["inventories"][resource_classes] = inventory_data
+            update_resource_provider_inventories(
+                provider_uuid, inventories_data)
+        else:
+            update_resource_provider_inventories_resource_class(
+                provider_uuid, resource_classes)
+    get_resource_provider_inventories_resource_class(
+        provider_uuid, resource_classes)
+
+update_placement_resource_class(provider_uuid, resource_classes)

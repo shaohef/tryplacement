@@ -252,6 +252,7 @@ def get_resource_provider_inventories_resource_class(uuid, name):
     url = BASEURL + "resource_providers/" + uuid + "/inventories/" + name
     r = requests.get(url, headers=HEADERS)
     pretty_print(r)
+    return r.ok
 
 def delete_resource_provider_inventories_resource_class(uuid, name):
     """uuid: provider uuid
@@ -322,6 +323,7 @@ def get_resource_classe(name):
     url = BASEURL + "resource_classes/" + name
     r = requests.get(url, headers=HEADERS)
     pretty_print(r)
+    return r.ok
 
 # OP for traits
 def create_trait(name):
@@ -345,6 +347,10 @@ def get_traits():
     url = BASEURL + "traits"
     r = requests.get(url, headers=HEADERS)
     pretty_print(r)
+    if not r.ok:
+        return []
+    data = r.json()
+    return data
 
 def show_trait(name):
     url = BASEURL + "traits/" + name
@@ -359,6 +365,10 @@ def get_resource_provider_traits(uuid):
     url = BASEURL + "resource_providers/" + uuid + "/traits"
     r = requests.get(url, headers=HEADERS)
     pretty_print(r)
+    if not r.ok:
+        return []
+    data = r.json()
+    return data
 
 def delete_resource_provider_traits(uuid):
     url = BASEURL + "resource_providers/" + uuid +"/traits"
