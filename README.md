@@ -28,3 +28,5 @@ $ openstack image create --file token.json  test.token
 $ openstack image list
 $ openstack image show 58b813db-1fb7-43ec-b85c-3b771c685d22
 $ openstack image set --tag INTEL --tag FPGA --property vendor=intel type=crypto  58b813db-1fb7-43ec-b85c-3b771c685d22
+all in one
+$ openstack image create --file cirros.qcow2 --property vendor=intel --property type=crypto --tag INTEL --tag FPGA fpga-cirros
